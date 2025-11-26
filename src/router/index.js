@@ -22,7 +22,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHashHistory('/frontend-admin/'),
+  history: createWebHashHistory(),   // ✅ no base argument
   routes
 })
 
