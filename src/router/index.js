@@ -1,14 +1,11 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import { jwtDecode } from "jwt-decode"
 
 // Views
 import Dashboard from '../views/Dashboard.vue'
 import Login from '../views/Login.vue'
 import Lessons from '../views/Lessons.vue'
-// import Orders from '../views/Orders.vue'
 import Orders from '../components/OrdersTable.vue'
-// import Icons from '../views/Icons.vue'
-// import CreateLesson from '../views/CreateLesson.vue'
 
 const routes = [
   { path: '/login', component: Login },
@@ -18,17 +15,14 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       { path: 'lessons', component: Lessons },
-      { path: 'orders', component: Orders },
-      // { path: 'icons', component: Icons },
-      // { path: 'create', component: CreateLesson }
+      { path: 'orders', component: Orders }
     ]
   },
-  // Redirect root to login by default
   { path: '/', redirect: '/login' }
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory('/frontend-admin/'),
   routes
 })
 
@@ -38,7 +32,7 @@ function isTokenValid() {
   if (!token) return false
   try {
     const decoded = jwtDecode(token)
-    const now = Date.now() / 1000 // seconds
+    const now = Date.now() / 1000
     return decoded.exp && decoded.exp > now
   } catch {
     return false
