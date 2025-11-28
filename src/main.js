@@ -1,20 +1,18 @@
 import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
-import { createPinia } from 'pinia'
-import './assets/styles.css'
+import { useAuthStore } from './stores/auth'
 
-// Import vue3-toastify
-import Toast from "vue3-toastify";
-import "vue3-toastify/dist/index.css";
+import 'animate.css'
+import 'bootstrap-icons/font/bootstrap-icons.css'
+import 'bootstrap/dist/css/bootstrap.min.css' 
 
-// Create Vue app
 const app = createApp(App)
-
-// Register plugins
+const pinia = createPinia()
+app.use(pinia)
 app.use(router)
-app.use(createPinia())
-app.use(Toast, { autoClose: 3000 }) 
 
-// Mount to #app in index.html
+
+
 app.mount('#app')

@@ -1,54 +1,58 @@
+// src/router/index.js
 import { createRouter, createWebHashHistory } from 'vue-router'
-import { jwtDecode } from "jwt-decode"
-
-// Views
-import Dashboard from '../views/Dashboard.vue'
-import Login from '../views/Login.vue'
-import Lessons from '../views/Lessons.vue'
-import Orders from '../components/OrdersTable.vue'
+import LoginView from '../views/LoginView.vue'
+import OrdersView from '../views/OrdersView.vue'
+import LessonsView from '../views/LessonsView.vue'
+import { useAuthStore } from '../stores/auth'
 
 const routes = [
-  { path: '/login', component: Login },
-  {
-    path: '/dashboard',
-    component: Dashboard,
-    meta: { requiresAuth: true },
-    children: [
-      { path: 'lessons', component: Lessons },
-      { path: 'orders', component: Orders }
-    ]
-  },
-  { path: '/', redirect: '/login' }
+  { path: '/login', component: LoginView },
+  { path: '/orders', component: OrdersView, meta: { requiresAuth: true } },
+  { path: '/lessons', component: LessonsView, meta: { requiresAuth: true } },
+  { path: '/', redirect: '/orders' },
+  { path: '/:pathMatch(.*)*', redirect: '/orders' }
 ]
 
 const router = createRouter({
-  history: createWebHashHistory(),   // ✅ no base argument
+  history: createWebHashHistory(),
   routes
 })
 
-// Helper checks if token exists and is still valid
-function isTokenValid() {
-  const token = localStorage.getItem('adminToken')
-  if (!token) return false
-  try {
-    const decoded = jwtDecode(token)
-    const now = Date.now() / 1000
-    return decoded.exp && decoded.exp > now
-  } catch {
-    return false
-  }
-}
+// THIS IS THE ONE THAT NEVER FAILS
+let isAuthChecked = false
 
-// Auth guard
-router.beforeEach((to, from, next) => {
-  if (to.meta.requiresAuth) {
-    if (!isTokenValid()) {
-      localStorage.removeItem('adminToken')
-      alert('Session expired, please log in again')
-      return next('/login')
+router.beforeEach(async (to, from, next) => {
+  const auth = useAuthStore()
+
+  // First time only: force load token from localStorage
+  if (!isAuthChecked) {
+    const savedToken = localStorage.getItem('adminToken')
+    if (savedToken) {
+      try {
+        const { jwtDecode } = await import('jwt-decode')
+        const decoded = jwtDecode(savedToken)
+        if (decoded.exp && decoded.exp > Date.now() / 1000) {
+          auth.token = savedToken
+          auth.user = decoded.user
+        } else {
+          localStorage.removeItem('adminToken')
+        }
+      } catch (err) {
+        console.error('Invalid saved token:', err)
+        localStorage.removeItem('adminToken')
+      }
     }
+    isAuthChecked = true
   }
-  next()
+
+  // Now do normal routing
+  if (to.path === '/login' && auth.isAuthenticated) {
+    next('/orders')
+  } else if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    next('/login')
+  } else {
+    next()
+  }
 })
 
 export default router
